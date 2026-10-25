@@ -44,8 +44,15 @@ int checkInvalidInput(int argc, int boardSize, char *argv[], char *namesArray[MA
 
 int main(int argc, char *argv[])
 {
-    //Check if argv array is without any parameters
-    if(argv[1] == (void *)0)
+    //Check the arguments before they are used to size the arrays below
+    if(argc < 10)
+    {
+        printf("INVALID INPUT");
+        return 0;
+    }
+    long long boardCells = (long long)atoi(argv[1]) * atoi(argv[1]);
+    if((atoi(argv[1]) < 2) || (atoi(argv[2]) < 1) || (atoi(argv[2]) > MAX_PLAYERS)
+       || (argc != (boardCells / 2) + boardCells + 4))
     {
         printf("INVALID INPUT");
         return 0;
@@ -178,6 +185,9 @@ int checkNumOfPlayers(char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH],int 
     //This whileLoop (and if after it) checks if there is the required amount of names
     while(name!=NULL)
     {
+        //More names than the array can hold
+        if(index==MAX_PLAYERS)
+            return INVALID;
         namesArray[index][0]=name;
         name= strtok(NULL, "#");
         count++;
