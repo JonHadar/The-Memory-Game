@@ -29,7 +29,7 @@ A 4 × 4 game for Alice and Bob with eight pairs:
 ./memory 4 2 "Alice#Bob" cat dog sun moon star tree fish bird 0 5 1 10 2 15 3 8 4 13 6 11 7 12 9 14
 ```
 
-The smallest possible game, a 2 × 2 board with two pairs:
+The first number is the board size. The smallest possible game is a 2 × 2 board with two pairs:
 
 ```bash
 ./memory 2 2 "Alice#Bob" cat dog 0 1 2 3
@@ -61,15 +61,28 @@ Object names are shown on the board in a 15-character cell and should be at most
 
 <p align="center"><img src="docs/screenshots/start.png" alt="Welcome screen: the board with cell coordinates and the list of eight objects" width="640"></p>
 
-**2. Turns.** Each turn shows the current board (`X` is a face-down card), then asks the current player for two cards as `row col`. A match reveals both cards and scores a point, and the same player goes again. A miss passes the turn to the next player.
+**2. Turns.** Each turn shows the current board (`X` is a face-down card), then asks the current player for two cards. Type each card as **row and column on one line**, e.g. `0 1`, and press Enter. A match reveals both cards and scores a point, and the same player goes again. A miss passes the turn to the next player.
 
 <p align="center"><img src="docs/screenshots/turns.png" alt="Alice matches the cats, then misses; Bob matches the dogs" width="480"></p>
 
 **3. The end.** When the game is over, the program announces the winner or a tie (top of this page).
 
+**Stopping early.** Type `q` at any card prompt to stop the game. The program shows who stopped it, the scores so far and who is leading:
+
+```
+Enter the coordinates of the first card (row col): q
+
+Game stopped by Bob.
+The scores are:
+Alice: 0, Bob: 2
+Bob is leading.
+```
+
 ## Rules
 
 - Players take turns in the order their names were given.
+- Each card is entered as row and column on the same line. If only one number (or nothing) is typed, the program asks again: `Please enter row and column on the same line, e.g. 0 1`.
+- Typing `q` at any card prompt stops the game and shows the scores.
 - Finding a pair scores 1 point and gives the same player another turn.
 - A move is rejected with **"Invalid move. Try again."** and the player enters it again if:
   - a coordinate is outside the board (below 0, or *n* or more);
@@ -90,6 +103,7 @@ flowchart TD
     B -- yes --> C[Set up names, objects, positions and a face-down board]
     C --> D[Show the coordinate board and the object list]
     D --> E[Turn: show board, read two cards]
+    E -- q --> Q[Show scores and who is leading, then exit]
     E --> F{Valid move?}
     F -- no --> E2[Invalid move. Try again.] --> E
     F -- yes --> G{Same object?}
@@ -109,6 +123,7 @@ flowchart TD
 | Setup | `fillPlayersNames`, `fillObjectsNames`, `insertObjectsPositions`, `switchGameBoardToX`, `initializationMatchArray` | Build the game's arrays from the arguments and start with every card face down |
 | Display | `printBoardStart`, `printObjectsList`, `printDynamicGameBoard` | Print the coordinate board, the object list, and the current board with names centered in their cells |
 | Turns | `gameProcess`, `readCoordinates`, `checkIfMatch` | Run one turn: read and validate the two cards, look for a match, update the board and the scores, and pass the turn on a miss |
+| Input and quitting | `readCoordinates`, `stopGame` | Read one card per line (row and column together), ask again if only one number is typed, and stop the game with the current scores on `q` |
 | End of game | `checkWinner`, `maxScore`, `checkEndGame` | Decide when the game is over and who won |
 
 ### Data

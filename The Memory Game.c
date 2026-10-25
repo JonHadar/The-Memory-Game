@@ -13,6 +13,7 @@
 #define INVALID 1
 #define THERE_IS_WINNER 1
 #define STILL_NO_WINNER 0
+#define INPUT_LINE_LENGTH 100
 
 void printBoardStart(int row, int column);
 void printObjectsList(char *objectsArray[], int boardSize);
@@ -35,7 +36,10 @@ int checkPositionsInput(int boardSize, char *argv[]);
 int checkNumOfPlayers(char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH],int numOfPlayers, char* playersNames);
 int checkIfMatch(int boardSize, int positionMatchArray1[],int positionMatchArray2[],int mergedcor1,int mergedcor2);
 void initializationMatchArray(int boardSize, int positionMatchArray1[],int positionMatchArray2[]);
-void readCoordinates(int *row, int *col);
+void readCoordinates(char *whichCard, int *row, int *col, int turnIndex, int numOfPlayers,
+                     int playersScore[numOfPlayers], char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH]);
+void stopGame(int turnIndex, int numOfPlayers, int playersScore[numOfPlayers],
+              char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH]);
 
 void checkEndGame (int boardSize, int numOfPlayers, int playersScore[numOfPlayers],
                    char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH]);
@@ -431,22 +435,80 @@ void initializationMatchArray(int boardSize, int positionMatchArray1[],int posit
 }
 
 /*
-This function reads the coordinates of one card. If the input is not two numbers, the rest of the line is skipped
-and the coordinates are set to -1 so the move is rejected as invalid. If the input ends, the program ends.
+This function asks for and reads the coordinates of one card. The row and column must be typed on the same line;
+if only one number (or nothing) is typed, the player is asked again. Typing q stops the game. Any other input that
+is not two numbers sets the coordinates to -1, so the move is rejected as invalid. If the input ends, the program ends.
 */
-void readCoordinates(int *row, int *col)
+void readCoordinates(char *whichCard, int *row, int *col, int turnIndex, int numOfPlayers,
+                     int playersScore[numOfPlayers], char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH])
 {
-    int result = scanf("%d%d", row, col);
-    if(result == EOF)
-        exit(0);
-    if(result != 2)
+    char line[INPUT_LINE_LENGTH];
+    char letter, extra;
+    int onlyNumber;
+
+    while(1)
     {
-        int c;
-        while(((c = getchar()) != '\n') && (c != EOF))
-            ;
+        printf("Enter the coordinates of the %s card (row col): ", whichCard);
+        if(fgets(line, sizeof(line), stdin) == NULL)
+            exit(0);
+
+        //Skip the rest of a line that was too long for the buffer
+        if(strchr(line, '\n') == NULL)
+        {
+            int c;
+            while(((c = getchar()) != '\n') && (c != EOF))
+                ;
+        }
+
+        //q (alone on the line) stops the game
+        if((sscanf(line, " %c %c", &letter, &extra) == 1) && ((letter == 'q') || (letter == 'Q')))
+            stopGame(turnIndex, numOfPlayers, playersScore, namesArray);
+
+        //Exactly two numbers on the line
+        if(sscanf(line, "%d %d %c", row, col, &extra) == 2)
+            return;
+
+        //Only one number, or an empty line: ask again for both numbers on one line
+        if((sscanf(line, "%d %c", &onlyNumber, &extra) == 1) || (sscanf(line, " %c", &extra) != 1))
+        {
+            printf("Please enter row and column on the same line, e.g. 0 1\n");
+            continue;
+        }
+
+        //Anything else is an invalid move
         *row = -1;
         *col = -1;
+        return;
     }
+}
+
+//This function stops the game in the middle, printing who stopped it, the scores and who is leading
+void stopGame(int turnIndex, int numOfPlayers, int playersScore[numOfPlayers],
+              char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH])
+{
+    printf("\nGame stopped by %s.\n", namesArray[turnIndex][0]);
+    printf("The scores are:\n");
+    for (int i = 0; i < numOfPlayers ; i++)
+    {
+        if(i!=0)
+            printf(", ");
+        printf("%s: %d", namesArray[i][0], playersScore[i]);
+    }
+
+    //Leading only if exactly one player has the highest score
+    int best = maxScore(numOfPlayers, playersScore);
+    int playersWithBestScore = 0;
+    for (int i = 0; i < numOfPlayers; i++)
+    {
+        if (playersScore[i] == playersScore[best])
+            playersWithBestScore++;
+    }
+
+    if (playersWithBestScore > 1)
+        printf("\nNobody is leading: it's a tie so far.\n");
+    else
+        printf("\n%s is leading.\n", namesArray[best][0]);
+    exit(0);
 }
 
 //This function checks if the coordinates that the player entered are identical to those that had a match before
@@ -484,10 +546,8 @@ void gameProcess(int *turnIndex, int boardSize, char* namesArray[MAX_PLAYERS][MA
     printDynamicGameBoard(boardSize, gameBoard);
     printf("\n\nIt is %s's turn.\n", namesArray[*turnIndex][0]);
 
-    printf("Enter the coordinates of the first card (row col): ");
-    readCoordinates(&cor1,&cor2);
-    printf("Enter the coordinates of the second card (row col): ");
-    readCoordinates(&cor3,&cor4);
+    readCoordinates("first", &cor1, &cor2, *turnIndex, numOfPlayers, playersScore, namesArray);
+    readCoordinates("second", &cor3, &cor4, *turnIndex, numOfPlayers, playersScore, namesArray);
 
     int mergedCor1=cor1*boardSize+cor2;
     int mergedCor2=cor3*boardSize+cor4;
@@ -498,10 +558,8 @@ void gameProcess(int *turnIndex, int boardSize, char* namesArray[MAX_PLAYERS][MA
        cor1>=boardSize||cor2>=boardSize||cor3>=boardSize||cor4>=boardSize||((cor1==cor3)&&(cor2==cor4))||(match==1))
     {
         printf("Invalid move. Try again.\n");
-        printf("Enter the coordinates of the first card (row col): ");
-        readCoordinates(&cor1,&cor2);
-        printf("Enter the coordinates of the second card (row col): ");
-        readCoordinates(&cor3,&cor4);
+        readCoordinates("first", &cor1, &cor2, *turnIndex, numOfPlayers, playersScore, namesArray);
+        readCoordinates("second", &cor3, &cor4, *turnIndex, numOfPlayers, playersScore, namesArray);
 
         mergedCor1=cor1*boardSize+cor2;
         mergedCor2=cor3*boardSize+cor4;
@@ -514,10 +572,8 @@ void gameProcess(int *turnIndex, int boardSize, char* namesArray[MAX_PLAYERS][MA
         {
             printf("Invalid move. Try again.\n");
 
-            printf("Enter the coordinates of the first card (row col): ");
-            readCoordinates(&cor1,&cor2);
-            printf("Enter the coordinates of the second card (row col): ");
-            readCoordinates(&cor3,&cor4);
+            readCoordinates("first", &cor1, &cor2, *turnIndex, numOfPlayers, playersScore, namesArray);
+            readCoordinates("second", &cor3, &cor4, *turnIndex, numOfPlayers, playersScore, namesArray);
 
             mergedCor1=cor1*boardSize+cor2;
             mergedCor2=cor3*boardSize+cor4;
