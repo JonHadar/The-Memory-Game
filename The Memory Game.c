@@ -132,10 +132,19 @@ void checkEndGame (int boardSize, int numOfPlayers, int playersScore[numOfPlayer
     }
     else
     {
-        if (((checkWinner(boardSize, numOfPlayers, playersScore)) == 2))
+        //It is a tie only if more than one player has the highest score
+        int best = maxScore(numOfPlayers, playersScore);
+        int playersWithBestScore = 0;
+        for (int i = 0; i < numOfPlayers; i++)
+        {
+            if (playersScore[i] == playersScore[best])
+                playersWithBestScore++;
+        }
+
+        if (playersWithBestScore > 1)
             printf("\nIt's a tie!");
         else
-            printf("\nCongratulations %s! You won!", namesArray[maxScore(numOfPlayers, playersScore)][0]);
+            printf("\nCongratulations %s! You won!", namesArray[best][0]);
     }
 }
 
@@ -226,13 +235,13 @@ int checkPositionsInput(int boardSize, char *argv[])
     return 0;
 }
 
-//This function checks what is the highest score in the game at the moment
+//This function returns the index of the player with the highest score in the game at the moment
 int maxScore(int numOfPlayers, int playersScore[numOfPlayers])
 {
-    int maxSco;
+    int maxSco=0;
     for (int i = 0; i < numOfPlayers; i++)
     {
-        if(playersScore[i]>maxSco)
+        if(playersScore[i]>playersScore[maxSco])
             maxSco=i;
     }
     return maxSco;
