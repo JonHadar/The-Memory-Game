@@ -35,6 +35,7 @@ int checkPositionsInput(int boardSize, char *argv[]);
 int checkNumOfPlayers(char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH],int numOfPlayers, char* playersNames);
 int checkIfMatch(int boardSize, int positionMatchArray1[],int positionMatchArray2[],int mergedcor1,int mergedcor2);
 void initializationMatchArray(int boardSize, int positionMatchArray1[],int positionMatchArray2[]);
+void readCoordinates(int *row, int *col);
 
 void checkEndGame (int boardSize, int numOfPlayers, int playersScore[numOfPlayers],
                    char *namesArray[MAX_PLAYERS][MAX_PLAYER_NAME_LENGTH]);
@@ -429,6 +430,25 @@ void initializationMatchArray(int boardSize, int positionMatchArray1[],int posit
     }
 }
 
+/*
+This function reads the coordinates of one card. If the input is not two numbers, the rest of the line is skipped
+and the coordinates are set to -1 so the move is rejected as invalid. If the input ends, the program ends.
+*/
+void readCoordinates(int *row, int *col)
+{
+    int result = scanf("%d%d", row, col);
+    if(result == EOF)
+        exit(0);
+    if(result != 2)
+    {
+        int c;
+        while(((c = getchar()) != '\n') && (c != EOF))
+            ;
+        *row = -1;
+        *col = -1;
+    }
+}
+
 //This function checks if the coordinates that the player entered are identical to those that had a match before
 int checkIfMatch(int boardSize, int positionMatchArray1[],int positionMatchArray2[],int mergedcor1,int mergedcor2)
 {
@@ -465,37 +485,39 @@ void gameProcess(int *turnIndex, int boardSize, char* namesArray[MAX_PLAYERS][MA
     printf("\n\nIt is %s's turn.\n", namesArray[*turnIndex][0]);
 
     printf("Enter the coordinates of the first card (row col): ");
-    scanf("%d%d", &cor1,&cor2);
+    readCoordinates(&cor1,&cor2);
     printf("Enter the coordinates of the second card (row col): ");
-    scanf("%d%d", &cor3,&cor4);
+    readCoordinates(&cor3,&cor4);
 
     int mergedCor1=cor1*boardSize+cor2;
     int mergedCor2=cor3*boardSize+cor4;
     int match = checkIfMatch(boardSize, positionMatchArray1,positionMatchArray2,mergedCor1,mergedCor2);
 
     //Checks if the input from the player is invalid
-    if(cor1>=boardSize||cor2>=boardSize||cor3>=boardSize||cor4>=boardSize||((cor1==cor3)&&(cor2==cor4))||(match==1))
+    if(cor1<0||cor2<0||cor3<0||cor4<0||
+       cor1>=boardSize||cor2>=boardSize||cor3>=boardSize||cor4>=boardSize||((cor1==cor3)&&(cor2==cor4))||(match==1))
     {
         printf("Invalid move. Try again.\n");
         printf("Enter the coordinates of the first card (row col): ");
-        scanf("%d%d", &cor1,&cor2);
+        readCoordinates(&cor1,&cor2);
         printf("Enter the coordinates of the second card (row col): ");
-        scanf("%d%d", &cor3,&cor4);
+        readCoordinates(&cor3,&cor4);
 
         mergedCor1=cor1*boardSize+cor2;
         mergedCor2=cor3*boardSize+cor4;
         match = checkIfMatch(boardSize, positionMatchArray1,positionMatchArray2,mergedCor1,mergedCor2);
 
         //This whileLoop will run as long as the user enters invalid input
-        while(cor1>=boardSize||cor2>=boardSize||cor3>=boardSize||cor4>=boardSize||((cor1==cor3)&&(cor2==cor4))||
+        while(cor1<0||cor2<0||cor3<0||cor4<0||
+              cor1>=boardSize||cor2>=boardSize||cor3>=boardSize||cor4>=boardSize||((cor1==cor3)&&(cor2==cor4))||
         (match==1))
         {
             printf("Invalid move. Try again.\n");
 
             printf("Enter the coordinates of the first card (row col): ");
-            scanf("%d%d", &cor1,&cor2);
+            readCoordinates(&cor1,&cor2);
             printf("Enter the coordinates of the second card (row col): ");
-            scanf("%d%d", &cor3,&cor4);
+            readCoordinates(&cor3,&cor4);
 
             mergedCor1=cor1*boardSize+cor2;
             mergedCor2=cor3*boardSize+cor4;
